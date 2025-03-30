@@ -1,26 +1,28 @@
 name: Docker Image CI
-
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
 jobs:
   build:
     runs-on: macos-latest
-
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Build Docker image for Apple Silicon
-      run: |
-        docker buildx build \
-          --platform linux/arm64 \
-          --file Dockerfile \
-          --tag my-image-name:$(date +%s) \
-          --load \
-          .
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker environment
+        run: |
+          brew install colima docker
+          colima start --cpu 2 --memory 4 --disk 10
+          echo "DOCKER_HOST=unix://${HOME}/.colima/default/docker.sock" >> $GITHUB_ENV
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build Docker image for Apple Silicon
+        run: |
+          docker buildx build \
+            --platform linux/arm64 \
+            --file Dockerfile \
+            --tag my-image-name:$(date +%s) \
+            --load
