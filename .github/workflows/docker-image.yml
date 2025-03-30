@@ -9,12 +9,27 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Docker environment
         run: |
-          brew install colima docker
-          colima start --cpu 2 --memory 4 --disk 10
-          echo "DOCKER_HOST=unix://${HOME}/.colima/default/docker.sock" >> $GITHUB_ENV
+          brew install --cask docker
+          open -a Docker
+
+          echo "Waiting for Docker to start..."
+          timeout=60
+          until docker info > /dev/null 2>&1 || [ $timeout -le 0 ]; do
+            sleep 1
+            ((timeout--))
+            if [ $((timeout % 10)) -eq 0 ]; then
+              echo "Still waiting for Docker... $timeout seconds remaining"
+            fi
+          done
+          if [ $timeout -le 0 ]; then
+            echo "Docker failed to start within timeout"
+            exit 1
+          fi
+          echo "Docker started successfully"
+          docker info
           
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

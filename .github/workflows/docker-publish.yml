@@ -37,11 +37,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker
+      - name: Set up Docker environment
         run: |
-          brew install docker
-          brew install colima
-          colima start
+          brew install --cask docker
+          open -a Docker
+
+          echo "Waiting for Docker to start..."
+          timeout=60
+          until docker info > /dev/null 2>&1 || [ $timeout -le 0 ]; do
+            sleep 1
+            ((timeout--))
+            if [ $((timeout % 10)) -eq 0 ]; then
+              echo "Still waiting for Docker... $timeout seconds remaining"
+            fi
+          done
+          if [ $timeout -le 0 ]; then
+            echo "Docker failed to start within timeout"
+            exit 1
+          fi
+          echo "Docker started successfully"
+          docker info
 
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
