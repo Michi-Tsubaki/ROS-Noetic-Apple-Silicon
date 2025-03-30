@@ -9,25 +9,31 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Set up Docker environment
         run: |
           brew install --cask docker
-          open -a Docker
-
+          ls -la /Applications/
+          open /Applications/Docker.app
+          docker version || true
+          
           echo "Waiting for Docker to start..."
-          timeout=60
+          timeout=120 
           until docker info > /dev/null 2>&1 || [ $timeout -le 0 ]; do
-            sleep 1
-            ((timeout--))
+            sleep 2
+            ((timeout-=2))
             if [ $((timeout % 10)) -eq 0 ]; then
               echo "Still waiting for Docker... $timeout seconds remaining"
+
+              ps aux | grep -i docker || true
             fi
           done
+          
           if [ $timeout -le 0 ]; then
             echo "Docker failed to start within timeout"
             exit 1
           fi
+          
           echo "Docker started successfully"
           docker info
           
